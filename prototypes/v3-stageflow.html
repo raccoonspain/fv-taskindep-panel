@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЗОВ Панель — V3: Воронка</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f4f6f9;color:#2d3748;line-height:1.4}
+.panel{padding:12px;max-width:960px}
+
+/* Top info bar */
+.topbar{background:#fff;border-radius:8px;padding:10px 16px;margin-bottom:10px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:15px;font-weight:700;color:#1a202c;flex:1}
+.topbar-obj{font-size:11px;color:#718096;background:#edf2f7;padding:3px 8px;border-radius:4px}
+.topbar-link{font-size:11px;color:#4299e1;text-decoration:none}
+.deadline-chip{background:#fff7ed;border:1px solid #fed7aa;color:#c05621;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+
+/* Stage pipeline */
+.pipeline{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;border:1px solid #e2e8f0;overflow-x:auto}
+.pipeline-title{font-size:10px;color:#718096;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.stages{display:flex;align-items:center;gap:0}
+.stage{display:flex;align-items:center;flex:1}
+.stage-dot{position:relative;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.stage-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid #cbd5e0;background:#fff;color:#a0aec0;z-index:1}
+.stage-label{font-size:9px;text-align:center;margin-top:4px;color:#a0aec0;white-space:nowrap;max-width:60px}
+.stage-line{flex:1;height:2px;background:#cbd5e0;margin:0 -1px;margin-bottom:16px}
+
+/* Stage states */
+.stage-dot.done .stage-circle{background:#48bb78;border-color:#48bb78;color:#fff}
+.stage-dot.done .stage-label{color:#276749}
+.stage-dot.active .stage-circle{background:#4299e1;border-color:#4299e1;color:#fff;box-shadow:0 0 0 4px rgba(66,153,225,.2)}
+.stage-dot.active .stage-label{color:#2b6cb0;font-weight:700}
+.stage-dot.fail .stage-circle{background:#fc8181;border-color:#fc8181;color:#fff}
+.stage-line.done{background:#48bb78}
+
+/* Alert cards */
+.alerts{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.alert-card{background:#fffbeb;border:1px solid #f6e05e;border-left:4px solid #d69e2e;border-radius:6px;padding:8px 12px;font-size:12px;display:flex;gap:8px}
+.alert-card.crit{background:#fff5f5;border-color:#fc8181;border-left-color:#e53e3e}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+
+/* 2-column grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden}
+.card-h{padding:10px 14px;border-bottom:1px solid #e2e8f0;font-weight:700;font-size:12px;color:#2d3748;display:flex;align-items:center;gap:8px;background:#f7fafc}
+.card-b{padding:12px 14px}
+
+/* Limit gauge */
+.gauge-wrap{margin-bottom:12px}
+.gauge-wrap:last-child{margin-bottom:0}
+.gauge-label{display:flex;justify-content:space-between;margin-bottom:4px}
+.gauge-name{font-size:12px;font-weight:600}
+.gauge-nums{font-size:11px;color:#718096}
+.gauge{height:12px;background:#edf2f7;border-radius:6px;overflow:hidden;margin-bottom:2px}
+.gauge-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:4px;font-size:8px;color:#fff;font-weight:700}
+.gauge-fill.blue{background:linear-gradient(90deg,#4299e1,#2b6cb0)}
+.gauge-fill.red{background:linear-gradient(90deg,#fc8181,#c53030)}
+.gauge-stat{font-size:10px;display:flex;justify-content:space-between}
+.gauge-used{color:#4a5568}
+.gauge-rest{font-weight:600}
+.gauge-rest.ok{color:#38a169}
+.gauge-rest.danger{color:#e53e3e}
+
+/* Entry list */
+.entry-list{margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0}
+.entry{display:flex;gap:6px;font-size:10px;padding:2px 0;color:#718096}
+.entry-type{width:80px;flex-shrink:0;font-weight:600;color:#4a5568}
+.entry-val{font-weight:600;color:#2d3748;flex:1;text-align:right}
+.entry-date{width:55px;text-align:right;color:#a0aec0}
+
+/* Team list */
+.trow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f7fafc}
+.trow:last-child{border-bottom:none}
+.tavatar{width:26px;height:26px;border-radius:50%;background:#4299e1;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.trole{font-size:10px;color:#a0aec0;width:65px;flex-shrink:0}
+.tname{font-size:12px;font-weight:600;color:#2d3748;flex:1}
+
+/* Subtask list */
+.strow{padding:8px 14px;border-bottom:1px solid #f0f4f8;display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:start}
+.strow:last-child{border-bottom:none}
+.strow:hover{background:#f7fafc}
+.st-name{font-weight:700;font-size:12px;color:#2b6cb0}
+.st-sub{font-size:10px;color:#718096;margin-top:2px}
+.st-warn{font-size:10px;color:#e53e3e;margin-top:2px}
+.stmoney{text-align:right;font-weight:600;font-size:12px;color:#2d3748;white-space:nowrap}
+.stmoney-label{font-size:9px;color:#a0aec0;text-align:right}
+.stbadge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap}
+.bd{background:#e6fffa;color:#234e52}
+.br{background:#ebf8ff;color:#2a4365}
+.bw{background:#fefcbf;color:#744210}
+.ba{background:#fff5f5;color:#742a2a}
+
+/* Accreditation */
+.acctable{width:100%;border-collapse:collapse}
+.acctable th{text-align:left;padding:6px 12px;font-size:10px;color:#718096;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #e2e8f0;background:#f7fafc}
+.acctable td{padding:8px 12px;border-bottom:1px solid #f0f4f8;font-size:12px}
+.acctable tr:hover td{background:#f7fafc}
+.acctable .total td{background:#ebf8ff;font-weight:700;border-top:2px solid #bee3f8}
+.pctbar{display:inline-block;width:60px;height:6px;background:#edf2f7;border-radius:3px;vertical-align:middle;margin:0 6px;overflow:hidden}
+.pctbar-fill{height:100%;background:#4299e1;border-radius:3px}
+.accname{font-weight:600}
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-title">ПС-03Э-АР</div>
+    <span class="topbar-obj">ЖК «Северный» · АР · Этап 3</span>
+    <a href="#" class="topbar-link">📎 ИД ↗</a>
+    <span class="deadline-chip">⏰ 31.07.2026</span>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="pipeline">
+    <div class="pipeline-title">Стадии бизнес-процесса</div>
+    <div class="stages">
+      <div class="stage-dot done">
+        <div class="stage-circle">✓</div>
+        <div class="stage-label">1А<br>Постановка</div>
+      </div>
+      <div class="stage-line done"></div>
+      <div class="stage-dot done">
+        <div class="stage-circle">✓</div>
+        <div class="stage-label">2А<br>Изучение</div>
+      </div>
+      <div class="stage-line done"></div>
+      <div class="stage-dot done">
+        <div class="stage-circle">✓</div>
+        <div class="stage-label">3А<br>Назначение</div>
+      </div>
+      <div class="stage-line done"></div>
+      <div class="stage-dot active">
+        <div class="stage-circle">⛏</div>
+        <div class="stage-label">4А<br>Выполнение</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage-dot">
+        <div class="stage-circle">5А</div>
+        <div class="stage-label">Приёмка<br>РП</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage-dot">
+        <div class="stage-circle">6А</div>
+        <div class="stage-label">Приёмка<br>РГП</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage-dot">
+        <div class="stage-circle">✅</div>
+        <div class="stage-label">Выпол-<br>нено</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alerts">
+    <div class="alert-card">
+      <span class="alert-icon">⚠️</span>
+      <div><b>Замечания к ПС-03Э-АР-П2:</b> 2 незакрытых замечания от РП. Подзадача находится на стадии «Приёмка РП».</div>
+    </div>
+    <div class="alert-card">
+      <span class="alert-icon">⏳</span>
+      <div><b>Запрос доп. информации по ПС-03Э-АР-П3:</b> ВС Морозов Д.И. ожидает доп. материалы от РП.</div>
+    </div>
+  </div>
+
+  <!-- 2-col: Limits + Team -->
+  <div class="grid2">
+    <!-- Limits -->
+    <div class="card">
+      <div class="card-h">💰 Лимиты</div>
+      <div class="card-b">
+        <div class="gauge-wrap">
+          <div class="gauge-label">
+            <span class="gauge-name">Планер</span>
+            <span class="gauge-nums">155 000 ₽ всего</span>
+          </div>
+          <div class="gauge">
+            <div class="gauge-fill blue" style="width:77%">77%</div>
+          </div>
+          <div class="gauge-stat">
+            <span class="gauge-used">Задействовано: 120 000 ₽</span>
+            <span class="gauge-rest ok">Остаток: 35 000 ₽</span>
+          </div>
+          <div class="entry-list">
+            <div class="entry"><span class="entry-type">Базовый</span><span class="entry-val">120 000</span><span class="entry-date">15.04</span></div>
+            <div class="entry"><span class="entry-type">К Планеру №1</span><span class="entry-val">+25 000</span><span class="entry-date">15.05</span></div>
+            <div class="entry"><span class="entry-type">К Планеру №2</span><span class="entry-val">+10 000</span><span class="entry-date">01.06</span></div>
+          </div>
+        </div>
+        <div class="gauge-wrap" style="margin-top:14px">
+          <div class="gauge-label">
+            <span class="gauge-name">К Решений</span>
+            <span class="gauge-nums">15 000 ₽ всего</span>
+          </div>
+          <div class="gauge">
+            <div class="gauge-fill red" style="width:100%">100%</div>
+          </div>
+          <div class="gauge-stat">
+            <span class="gauge-used">Задействовано: 15 000 ₽</span>
+            <span class="gauge-rest danger">Остаток: 0 ₽</span>
+          </div>
+          <div class="entry-list">
+            <div class="entry"><span class="entry-type">К Решений №1</span><span class="entry-val">+15 000</span><span class="entry-date">10.06</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team -->
+    <div class="card">
+      <div class="card-h">👥 Команда</div>
+      <div class="card-b">
+        <div class="trow"><div class="tavatar">ВА</div><span class="trole">РП</span><span class="tname">Воронов А.С.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#6b46c1">КБ</div><span class="trole">РО</span><span class="tname">Климов Б.Н.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#2f855a">ТВ</div><span class="trole">РГП</span><span class="tname">Тарасов В.Е.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#c05621">МД</div><span class="trole">ВС</span><span class="tname">Морозов Д.И.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#2c7a7b">ЛЕ</div><span class="trole">ГС ТХ</span><span class="tname">Лебедева Е.К.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#744210">ЗЖ</div><span class="trole">ГС Перс</span><span class="tname">Зайцева Ж.Л.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#553c9a">ОЗ</div><span class="trole">РО РП</span><span class="tname">Орлов З.М.</span></div>
+        <div class="trow"><div class="tavatar" style="background:#285e61">ФИ</div><span class="trole">ГС 5</span><span class="tname">Федоров И.Н.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtasks full width -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="card-h">📋 Подзадачи &nbsp;<span style="font-size:10px;font-weight:400;color:#a0aec0">3 шт · 120 000 ₽ задействовано</span></div>
+    <div>
+      <div class="strow" style="font-size:10px;color:#a0aec0;padding:6px 14px;background:#f7fafc;border-bottom:1px solid #e2e8f0;font-weight:600;text-transform:uppercase;letter-spacing:.4px">
+        <span>Подзадача / Специалист</span>
+        <span>Планер</span>
+        <span>К Реш.</span>
+        <span>Статус</span>
+      </div>
+      <div class="strow">
+        <div>
+          <div class="st-name">ПС-03Э-АР-П1</div>
+          <div class="st-sub">С: Николаев К.О. · ВС: Морозов Д.И. · до 30.05.2026</div>
+        </div>
+        <div>
+          <div class="stmoney">50 000 ₽</div>
+          <div class="stmoney-label">Планер</div>
+        </div>
+        <div>
+          <div class="stmoney" style="color:#a0aec0">—</div>
+        </div>
+        <div><span class="stbadge bd">✅ Выполнена</span></div>
+      </div>
+      <div class="strow">
+        <div>
+          <div class="st-name">ПС-03Э-АР-П2</div>
+          <div class="st-sub">С: Николаев К.О. · ВС: Морозов Д.И. · до 30.06.2026</div>
+          <div class="st-warn">⚠️ 2 замечания от РП</div>
+        </div>
+        <div>
+          <div class="stmoney">40 000 ₽</div>
+          <div class="stmoney-label">Планер</div>
+        </div>
+        <div>
+          <div class="stmoney" style="color:#d97706">15 000 ₽</div>
+          <div class="stmoney-label">К Реш.</div>
+        </div>
+        <div><span class="stbadge br">🔍 Приёмка РП</span></div>
+      </div>
+      <div class="strow">
+        <div>
+          <div class="st-name">ПС-03Э-АР-П3</div>
+          <div class="st-sub">С: Николаев К.О. · ВС: Морозов Д.И. · до 31.07.2026</div>
+          <div class="st-warn" style="color:#d97706">⏳ Ожидает доп. информацию</div>
+        </div>
+        <div>
+          <div class="stmoney">30 000 ₽</div>
+          <div class="stmoney-label">Планер</div>
+        </div>
+        <div>
+          <div class="stmoney" style="color:#a0aec0">—</div>
+        </div>
+        <div><span class="stbadge bw">⛏ Выполнение</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accreditation -->
+  <div class="card">
+    <div class="card-h">🏅 Аккредитация &nbsp;<span style="font-size:10px;font-weight:400;color:#a0aec0">ПС-03Э-АР-П1 завершена · 50 000 ₽</span></div>
+    <div>
+      <table class="acctable">
+        <thead>
+          <tr>
+            <th>Роль</th>
+            <th>Участник</th>
+            <th>%</th>
+            <th style="text-align:right">Начислено (П1)</th>
+            <th style="text-align:right">Ожид. (П2 + П3)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:#718096;font-size:11px">Специалист (С)</td>
+            <td><span class="accname">Николаев К.О.</span></td>
+            <td>52.5%<div class="pctbar"><div class="pctbar-fill" style="width:52.5%"></div></div></td>
+            <td style="text-align:right;font-weight:700">26 250 ₽</td>
+            <td style="text-align:right;color:#718096;font-size:11px">~36 750</td>
+          </tr>
+          <tr>
+            <td style="color:#718096;font-size:11px">ВС</td>
+            <td><span class="accname">Морозов Д.И.</span></td>
+            <td>37.5%<div class="pctbar"><div class="pctbar-fill" style="width:37.5%"></div></div></td>
+            <td style="text-align:right;font-weight:700">18 750 ₽</td>
+            <td style="text-align:right;color:#718096;font-size:11px">~26 250</td>
+          </tr>
+          <tr>
+            <td style="color:#718096;font-size:11px">РО</td>
+            <td>Климов Б.Н.</td>
+            <td>5%<div class="pctbar"><div class="pctbar-fill" style="width:5%"></div></div></td>
+            <td style="text-align:right;font-weight:700">2 500 ₽</td>
+            <td style="text-align:right;color:#718096;font-size:11px">~3 500</td>
+          </tr>
+          <tr>
+            <td style="color:#718096;font-size:11px">ГС ТХ</td>
+            <td>Лебедева Е.К.</td>
+            <td>2.5%<div class="pctbar"><div class="pctbar-fill" style="width:2.5%"></div></div></td>
+            <td style="text-align:right;font-weight:700">1 250 ₽</td>
+            <td style="text-align:right;color:#718096;font-size:11px">~1 750</td>
+          </tr>
+          <tr>
+            <td style="color:#718096;font-size:11px">ГС Перс</td>
+            <td>Зайцева Ж.Л.</td>
+            <td>2.5%<div class="pctbar"><div class="pctbar-fill" style="width:2.5%"></div></div></td>
+            <td style="text-align:right;font-weight:700">1 250 ₽</td>
+            <td style="text-align:right;color:#718096;font-size:11px">~1 750</td>
+          </tr>
+          <tr class="total">
+            <td colspan="2"><b>Итого</b></td>
+            <td><b>100%</b></td>
+            <td style="text-align:right"><b>50 000 ₽</b></td>
+            <td style="text-align:right;color:#2b6cb0;font-weight:600">~70 000 ₽</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

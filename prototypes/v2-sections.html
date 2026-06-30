@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЗОВ Панель — V2: Журнал</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#fff;color:#222;line-height:1.5}
+.panel{padding:0;max-width:920px}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#1a3a6e 0%,#2e60b0 100%);color:#fff;padding:16px 20px}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.hero-title{font-size:18px;font-weight:700}
+.hero-sub{font-size:12px;opacity:.75;margin-top:3px}
+.hero-badge{padding:4px 14px;background:rgba(255,255,255,0.18);border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.35);white-space:nowrap}
+.hero-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;margin-top:10px}
+.hkpi{padding:10px 12px;background:rgba(0,0,0,.1)}
+.hkpi-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.hkpi-val{font-size:18px;font-weight:700}
+.hkpi-sub{font-size:10px;opacity:.65;margin-top:1px}
+
+/* Alert strip */
+.alerts{background:#fffbeb;border-bottom:1px solid #fcd34d}
+.alert-item{display:flex;align-items:center;gap:10px;padding:7px 20px;border-bottom:1px dashed #fde68a;font-size:12px}
+.alert-item:last-child{border-bottom:none}
+.ai-icon{font-size:14px;flex-shrink:0}
+.ai-text b{color:#92400e}
+
+/* Sections */
+.section{border-bottom:1px solid #e8e8e8}
+.sec-header{padding:12px 20px;cursor:pointer;display:flex;align-items:center;gap:10px;user-select:none;background:#fafafa}
+.sec-header:hover{background:#f3f4f6}
+.sec-icon{font-size:16px}
+.sec-title{font-size:14px;font-weight:600;color:#1a3a6e;flex:1}
+.sec-badge{font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-weight:600}
+.sec-badge.warn{background:#fef3c7;color:#92400e}
+.sec-badge.ok{background:#dcfce7;color:#166534}
+.sec-badge.danger{background:#fee2e2;color:#991b1b}
+.sec-arrow{font-size:10px;color:#aaa;transition:transform .15s}
+.sec-body{padding:14px 20px}
+
+/* Limit bars */
+.lim-group{margin-bottom:14px}
+.lim-group:last-child{margin-bottom:0}
+.lim-title{font-weight:700;font-size:13px;margin-bottom:6px;display:flex;justify-content:space-between}
+.lim-total{color:#1a3a6e}
+.bar-wrap{background:#e5e7eb;border-radius:4px;height:8px;margin-bottom:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.fill-used{background:#1a3a6e}
+.fill-empty{background:#e5e7eb}
+.lim-stat{display:flex;justify-content:space-between;font-size:11px;color:#666}
+.lim-entries{margin-top:8px;border-left:3px solid #e0e7ff;padding-left:10px}
+.lim-entry{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#555}
+.lim-entry .type{color:#888;width:90px;flex-shrink:0}
+.lim-entry .date{color:#aaa;font-size:10px;width:60px;text-align:right;flex-shrink:0}
+.lim-entry .val{font-weight:600;color:#1a3a6e;text-align:right;flex:1}
+
+/* Team */
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.team-card{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8f9fa;border-radius:6px;border:1px solid #e5e7eb}
+.team-avatar{width:32px;height:32px;border-radius:50%;background:#1a3a6e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.team-info{flex:1;min-width:0}
+.team-role{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px}
+.team-name{font-weight:600;font-size:12px;color:#1a3a6e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Subtask table */
+.stable{width:100%;border-collapse:collapse}
+.stable th{text-align:left;padding:6px 8px;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #e0e0e0;background:#fff}
+.stable td{padding:10px 8px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+.stable tr:hover td{background:#f9fafb}
+.st-name{font-weight:700;color:#1a3a6e;font-size:13px}
+.st-spec{font-size:11px;color:#555;margin-top:2px}
+.st-notes{font-size:11px;color:#dc2626;margin-top:3px;font-style:italic}
+.badge-s{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.s-done{background:#dcfce7;color:#166534}
+.s-review{background:#dbeafe;color:#1e40af}
+.s-work{background:#fef3c7;color:#92400e}
+.money{text-align:right;font-weight:600;font-size:13px;color:#1a3a6e}
+.money-sub{text-align:right;font-size:10px;color:#888;margin-top:1px}
+.st-deadline{font-size:11px;color:#888}
+
+/* Accreditation */
+.accred-table{width:100%;border-collapse:collapse}
+.accred-table th{text-align:left;padding:6px 10px;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #e0e0e0}
+.accred-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0}
+.accred-bar{width:80px;display:inline-block;margin-left:6px;height:4px;background:#e5e7eb;border-radius:2px;vertical-align:middle}
+.accred-bar-fill{height:100%;border-radius:2px;background:#1a3a6e}
+.total-row td{background:#f0f4ff;font-weight:700;border-top:2px solid #c7d2fe}
+
+.footer{padding:10px 20px;font-size:10px;color:#aaa;border-top:1px solid #e8e8e8;background:#fafafa}
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title">ПС-03Э-АР &nbsp;·&nbsp; ЖК «Северный»</div>
+        <div class="hero-sub">Архитектурные решения · Этап 3 · Объект: ПС · <a href="#" style="color:rgba(255,255,255,.7)">Ссылка ИД ↗</a></div>
+      </div>
+      <div style="text-align:right">
+        <div class="hero-badge">⛏ 4А Выполнение</div>
+        <div style="font-size:11px;opacity:.6;margin-top:5px">дедлайн 31.07.2026</div>
+      </div>
+    </div>
+    <div class="hero-kpis">
+      <div class="hkpi">
+        <div class="hkpi-label">Лимит Планер</div>
+        <div class="hkpi-val">155 000 ₽</div>
+        <div class="hkpi-sub">остаток: 35 000 ₽</div>
+      </div>
+      <div class="hkpi">
+        <div class="hkpi-label">Лимит К Решений</div>
+        <div class="hkpi-val">15 000 ₽</div>
+        <div class="hkpi-sub" style="color:#fca5a5">остаток: 0 ₽ — исчерпан</div>
+      </div>
+      <div class="hkpi">
+        <div class="hkpi-label">Подзадачи</div>
+        <div class="hkpi-val">1 / 3</div>
+        <div class="hkpi-sub">завершено · 33%</div>
+      </div>
+      <div class="hkpi">
+        <div class="hkpi-label">До дедлайна</div>
+        <div class="hkpi-val">31 дн</div>
+        <div class="hkpi-sub">31 июля 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="alerts">
+    <div class="alert-item">
+      <span class="ai-icon">⚠️</span>
+      <span class="ai-text"><b>Замечания РП:</b> Подзадача ПС-03Э-АР-П2 имеет 2 незакрытых замечания. Требуется проверка.</span>
+    </div>
+    <div class="alert-item">
+      <span class="ai-icon">⏳</span>
+      <span class="ai-text"><b>Ожидание доп. инфо:</b> Подзадача ПС-03Э-АР-П3 ожидает доп. информацию от РП.</span>
+    </div>
+  </div>
+
+  <!-- Section: Лимиты -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-icon">💰</span>
+      <span class="sec-title">Лимиты</span>
+      <span class="sec-badge">Планер: 35 000 ₽ свободно</span>
+      <span class="sec-badge danger" style="margin-left:6px">К Решений: 0 ₽</span>
+    </div>
+    <div class="sec-body">
+      <div class="lim-group">
+        <div class="lim-title">
+          <span>Лимит Планер</span>
+          <span class="lim-total">155 000 ₽</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-fill fill-used" style="width:77%"></div>
+        </div>
+        <div class="lim-stat">
+          <span>Задействовано: <b>120 000 ₽</b> (77%)</span>
+          <span>Свободно: <b style="color:#16a34a">35 000 ₽</b> (23%)</span>
+        </div>
+        <div class="lim-entries">
+          <div class="lim-entry"><span class="type">Базовый</span><span class="val">120 000 ₽</span><span class="date">15.04.2026</span></div>
+          <div class="lim-entry"><span class="type">К Планеру №1</span><span class="val">+25 000 ₽</span><span class="date">15.05.2026</span></div>
+          <div class="lim-entry"><span class="type">К Планеру №2</span><span class="val">+10 000 ₽</span><span class="date">01.06.2026</span></div>
+        </div>
+      </div>
+      <div class="lim-group">
+        <div class="lim-title">
+          <span>Лимит К Решений</span>
+          <span class="lim-total" style="color:#dc2626">15 000 ₽</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-fill" style="width:100%;background:#dc2626"></div>
+        </div>
+        <div class="lim-stat">
+          <span>Задействовано: <b>15 000 ₽</b> (100%)</span>
+          <span style="color:#dc2626">Свободно: <b>0 ₽</b> — лимит исчерпан</span>
+        </div>
+        <div class="lim-entries">
+          <div class="lim-entry"><span class="type">К Решений №1</span><span class="val">+15 000 ₽</span><span class="date">10.06.2026</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Команда -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-icon">👥</span>
+      <span class="sec-title">Команда</span>
+      <span class="sec-badge">8 участников</span>
+    </div>
+    <div class="sec-body">
+      <div class="team-grid">
+        <div class="team-card">
+          <div class="team-avatar">ВА</div>
+          <div class="team-info"><div class="team-role">Рук. проекта (РП)</div><div class="team-name">Воронов А.С.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">КБ</div>
+          <div class="team-info"><div class="team-role">Рук. отдела (РО)</div><div class="team-name">Климов Б.Н.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">ТВ</div>
+          <div class="team-info"><div class="team-role">РГП</div><div class="team-name">Тарасов В.Е.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">МД</div>
+          <div class="team-info"><div class="team-role">Ведущий спец. (ВС)</div><div class="team-name">Морозов Д.И.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">ЛЕ</div>
+          <div class="team-info"><div class="team-role">ГС ТХ</div><div class="team-name">Лебедева Е.К.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">ЗЖ</div>
+          <div class="team-info"><div class="team-role">ГС Перс</div><div class="team-name">Зайцева Ж.Л.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">ОЗ</div>
+          <div class="team-info"><div class="team-role">РО РП</div><div class="team-name">Орлов З.М.</div></div>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">ФИ</div>
+          <div class="team-info"><div class="team-role">ГС 5</div><div class="team-name">Федоров И.Н.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Подзадачи -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-icon">📋</span>
+      <span class="sec-title">Подзадачи</span>
+      <span class="sec-badge ok">1 завершена</span>
+      <span class="sec-badge warn" style="margin-left:4px">2 в работе</span>
+    </div>
+    <div class="sec-body" style="padding:0 20px 14px">
+      <table class="stable">
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Специалист</th>
+            <th style="text-align:right">Планер</th>
+            <th style="text-align:right">К Реш.</th>
+            <th>Дедлайн</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="st-name">ПС-03Э-АР-П1</div>
+            </td>
+            <td><div class="st-spec">Николаев К.О.</div></td>
+            <td class="money">50 000</td>
+            <td class="money-sub">—</td>
+            <td class="st-deadline">30.05.2026</td>
+            <td><span class="badge-s s-done">✅ Выполнена</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="st-name">ПС-03Э-АР-П2</div>
+              <div class="st-notes">⚠️ 2 замечания от РП</div>
+            </td>
+            <td><div class="st-spec">Николаев К.О.</div></td>
+            <td class="money">40 000</td>
+            <td class="money" style="color:#d97706">15 000</td>
+            <td class="st-deadline">30.06.2026</td>
+            <td><span class="badge-s s-review">🔍 Приёмка РП</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="st-name">ПС-03Э-АР-П3</div>
+              <div class="st-notes">⏳ Ожидает доп. инфо</div>
+            </td>
+            <td><div class="st-spec">Николаев К.О.</div></td>
+            <td class="money">30 000</td>
+            <td class="money-sub">—</td>
+            <td class="st-deadline">31.07.2026</td>
+            <td><span class="badge-s s-work">⛏ Выполнение</span></td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="2"><b>Итого</b></td>
+            <td class="money">120 000</td>
+            <td class="money" style="color:#d97706">15 000</td>
+            <td colspan="2" style="font-size:10px;color:#666">из 155 000 / 15 000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section: Аккредитация -->
+  <div class="section">
+    <div class="sec-header">
+      <span class="sec-icon">🏅</span>
+      <span class="sec-title">Аккредитация</span>
+      <span class="sec-badge">50 000 ₽ распределено · 85 000 ₽ ожидается</span>
+    </div>
+    <div class="sec-body" style="padding:0 20px 14px">
+      <table class="accred-table">
+        <thead>
+          <tr>
+            <th>Роль</th>
+            <th>Участник</th>
+            <th>Процент</th>
+            <th style="text-align:right">П1 (50 000 ₽)</th>
+            <th style="text-align:right">П2 (ожид.)</th>
+            <th style="text-align:right">П3 (ожид.)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-size:11px;color:#888">С</td>
+            <td><b>Николаев К.О.</b></td>
+            <td>52.5%<div class="accred-bar"><div class="accred-bar-fill" style="width:52.5%"></div></div></td>
+            <td style="text-align:right;font-weight:600">26 250 ₽</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~21 000</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~15 750</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:#888">ВС</td>
+            <td><b>Морозов Д.И.</b></td>
+            <td>37.5%<div class="accred-bar"><div class="accred-bar-fill" style="width:37.5%"></div></div></td>
+            <td style="text-align:right;font-weight:600">18 750 ₽</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~15 000</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~11 250</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:#888">РО</td>
+            <td>Климов Б.Н.</td>
+            <td>5%<div class="accred-bar"><div class="accred-bar-fill" style="width:5%"></div></div></td>
+            <td style="text-align:right;font-weight:600">2 500 ₽</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~2 000</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~1 500</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:#888">ГС ТХ</td>
+            <td>Лебедева Е.К.</td>
+            <td>2.5%<div class="accred-bar"><div class="accred-bar-fill" style="width:2.5%"></div></div></td>
+            <td style="text-align:right;font-weight:600">1 250 ₽</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~1 000</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~750</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:#888">ГС Перс</td>
+            <td>Зайцева Ж.Л.</td>
+            <td>2.5%<div class="accred-bar"><div class="accred-bar-fill" style="width:2.5%"></div></div></td>
+            <td style="text-align:right;font-weight:600">1 250 ₽</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~1 000</td>
+            <td style="text-align:right;color:#aaa;font-size:11px">~750</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="2"><b>Итого</b></td>
+            <td><b>100%</b></td>
+            <td style="text-align:right;font-weight:700">50 000 ₽</td>
+            <td style="text-align:right;color:#666;font-weight:600">~40 000</td>
+            <td style="text-align:right;color:#666;font-weight:600">~30 000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">Пульт управления ЗОВ · смарт-процесс #1036 · последнее обновление данных: 30.06.2026</div>
+</div>
+</body>
+</html>

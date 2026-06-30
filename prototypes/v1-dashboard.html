@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЗОВ Панель — V1: Командный центр</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f0f2f5;color:#333;line-height:1.4}
+.panel{padding:12px;max-width:1100px}
+
+/* Header */
+.header{background:#1e4d8c;color:#fff;padding:10px 14px;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.header-title{font-size:16px;font-weight:700;flex:1}
+.badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-stage{background:#f0c27f;color:#7a4800}
+.badge-deadline{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4)}
+.header-meta{font-size:11px;opacity:.7;background:#163d70;padding:5px 14px;border-radius:0 0 0 0;margin-bottom:8px}
+
+/* Alert */
+.alert{background:#fff3cd;border-left:4px solid #e6a817;padding:7px 12px;border-radius:4px;margin-bottom:8px;font-size:12px;display:flex;gap:8px;align-items:center}
+.alert-icon{font-size:15px}
+
+/* KPI Row */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.kpi{background:#fff;border-radius:6px;padding:10px 14px;border:1px solid #e0e0e0}
+.kpi-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi-value{font-size:20px;font-weight:700;color:#1e4d8c}
+.kpi-sub{font-size:10px;color:#888;margin-top:2px}
+.kpi-value.warn{color:#d97706}
+.kpi-value.ok{color:#16a34a}
+.kpi-value.danger{color:#dc2626}
+
+/* Progress bar */
+.progress{height:5px;background:#e5e7eb;border-radius:3px;margin-top:6px}
+.progress-fill{height:100%;border-radius:3px;background:#1e4d8c}
+.progress-fill.warn{background:#d97706}
+.progress-fill.ok{background:#16a34a}
+
+/* Main grid */
+.main-grid{display:grid;grid-template-columns:1fr 1.6fr;gap:8px;margin-bottom:8px}
+
+/* Cards */
+.card{background:#fff;border-radius:6px;border:1px solid #e0e0e0;overflow:hidden}
+.card-header{background:#f8f9fa;padding:7px 12px;font-weight:600;font-size:12px;border-bottom:1px solid #e0e0e0;color:#555;display:flex;align-items:center;gap:6px}
+.card-body{padding:10px 12px}
+
+/* Team */
+.team-row{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid #f0f0f0;gap:8px}
+.team-row:last-child{border-bottom:none}
+.team-role{font-size:10px;color:#888;width:70px;flex-shrink:0}
+.team-name{font-weight:500;color:#1e4d8c;flex:1}
+.team-lim{font-size:11px;color:#666;text-align:right}
+
+/* Limits */
+.lim-row{padding:6px 0;border-bottom:1px solid #f0f0f0}
+.lim-row:last-child{border-bottom:none}
+.lim-header{display:flex;justify-content:space-between;margin-bottom:3px}
+.lim-type{font-weight:600;font-size:12px}
+.lim-amount{font-weight:700;color:#1e4d8c}
+.lim-detail{font-size:10px;color:#888}
+.lim-entries{margin-top:4px}
+.lim-entry{display:flex;justify-content:space-between;font-size:10px;color:#666;padding:1px 0 1px 8px;border-left:2px solid #e0e0e0}
+
+/* Subtask table */
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th{background:#f8f9fa;text-align:left;padding:5px 8px;font-weight:600;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e0e0e0}
+.table td{padding:7px 8px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:#fafafa}
+.st-name{font-weight:600;color:#1e4d8c}
+.st-meta{font-size:10px;color:#888;margin-top:1px}
+.status{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.s-done{background:#dcfce7;color:#166534}
+.s-review{background:#dbeafe;color:#1e40af}
+.s-work{background:#fef3c7;color:#92400e}
+.s-cancel{background:#fee2e2;color:#991b1b}
+.s-init{background:#f3f4f6;color:#6b7280}
+.num{text-align:right;font-weight:600}
+.num-small{text-align:right;color:#888}
+
+/* Accreditation */
+.accred-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.accred-card{background:#fff;border-radius:6px;border:1px solid #e0e0e0;padding:10px;text-align:center}
+.accred-role{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.accred-name{font-weight:600;font-size:12px;margin-bottom:4px;color:#1e4d8c}
+.accred-pct{font-size:16px;font-weight:700;color:#1e4d8c}
+.accred-val{font-size:11px;color:#555;margin-top:2px}
+.accred-sub{font-size:9px;color:#888;margin-top:1px}
+.divider{font-size:10px;color:#aaa;text-align:right;padding-bottom:4px;margin-bottom:4px;border-bottom:1px solid #eee}
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">ПС-03Э-АР &nbsp;·&nbsp; ЖК «Северный»</div>
+    <span class="badge badge-stage">⛏ 4А Выполнение</span>
+    <span class="badge badge-deadline">⏰ до 31.07.2026</span>
+  </div>
+  <div class="header-meta">Архитектурные решения · Этап 3 · Модуль АР · Объект: ПС · Ссылка ИД: <a href="#" style="color:#90b4e0">открыть</a></div>
+
+  <!-- Alert -->
+  <div class="alert">
+    <span class="alert-icon">⚠️</span>
+    <span><b>Есть замечания:</b> Подзадача ПС-03Э-АР-П2 имеет 2 замечания от РП — требует проверки.&nbsp;
+    Подзадача ПС-03Э-АР-П3 ожидает дополнительную информацию.</span>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Остаток Планер</div>
+      <div class="kpi-value ok">35 000 ₽</div>
+      <div class="kpi-sub">из 155 000 ₽ (22.6%)</div>
+      <div class="progress"><div class="progress-fill ok" style="width:22%"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Остаток К Решений</div>
+      <div class="kpi-value danger">0 ₽</div>
+      <div class="kpi-sub">из 15 000 ₽ — исчерпан</div>
+      <div class="progress"><div class="progress-fill danger" style="width:0%"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Подзадачи</div>
+      <div class="kpi-value">1 / 3</div>
+      <div class="kpi-sub">выполнено &nbsp;·&nbsp; 1 на приёмке &nbsp;·&nbsp; 1 в работе</div>
+      <div class="progress"><div class="progress-fill" style="width:33%"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">До дедлайна</div>
+      <div class="kpi-value warn">31 дн</div>
+      <div class="kpi-sub">31 июля 2026</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+    <!-- Left column: Team + Limits -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card">
+        <div class="card-header">👥 Команда</div>
+        <div class="card-body">
+          <div class="team-row"><span class="team-role">РП</span><span class="team-name">Воронов А.С.</span></div>
+          <div class="team-row"><span class="team-role">РО</span><span class="team-name">Климов Б.Н.</span></div>
+          <div class="team-row"><span class="team-role">РГП</span><span class="team-name">Тарасов В.Е.</span></div>
+          <div class="team-row"><span class="team-role">ВС</span><span class="team-name">Морозов Д.И.</span></div>
+          <div class="team-row"><span class="team-role">ГС ТХ</span><span class="team-name">Лебедева Е.К.</span></div>
+          <div class="team-row"><span class="team-role">ГС Перс</span><span class="team-name">Зайцева Ж.Л.</span></div>
+          <div class="team-row"><span class="team-role">РО РП</span><span class="team-name">Орлов З.М.</span></div>
+          <div class="team-row"><span class="team-role">ГС 5</span><span class="team-name">Федоров И.Н.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">💰 Лимиты</div>
+        <div class="card-body">
+          <div class="lim-row">
+            <div class="lim-header">
+              <span class="lim-type">Планер</span>
+              <span class="lim-amount">155 000 ₽</span>
+            </div>
+            <div class="lim-entries">
+              <div class="lim-entry"><span>Базовый (15.04)</span><span>120 000</span></div>
+              <div class="lim-entry"><span>К Планеру (15.05)</span><span>+25 000</span></div>
+              <div class="lim-entry"><span>К Планеру (01.06)</span><span>+10 000</span></div>
+            </div>
+            <div class="progress" style="margin-top:6px"><div class="progress-fill" style="width:77%"></div></div>
+            <div class="lim-detail" style="margin-top:3px">Задействовано: 120 000 ₽ · Остаток: <b style="color:#16a34a">35 000 ₽</b></div>
+          </div>
+          <div class="lim-row">
+            <div class="lim-header">
+              <span class="lim-type">К Решений</span>
+              <span class="lim-amount">15 000 ₽</span>
+            </div>
+            <div class="lim-entries">
+              <div class="lim-entry"><span>К Решений (10.06)</span><span>+15 000</span></div>
+            </div>
+            <div class="progress" style="margin-top:6px"><div class="progress-fill danger" style="width:100%"></div></div>
+            <div class="lim-detail" style="margin-top:3px">Задействовано: 15 000 ₽ · Остаток: <b style="color:#dc2626">0 ₽</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Subtasks -->
+    <div class="card">
+      <div class="card-header">📋 Подзадачи (3)</div>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Подзадача / Специалист</th>
+              <th style="text-align:right">Планер</th>
+              <th style="text-align:right">К Реш.</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="st-name">ПС-03Э-АР-П1</div>
+                <div class="st-meta">С: Николаев К.О. · ВС: Морозов Д.И. · дедлайн 30.05.2026</div>
+              </td>
+              <td class="num">50 000</td>
+              <td class="num-small">—</td>
+              <td><span class="status s-done">✅ Выполнена</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="st-name">ПС-03Э-АР-П2</div>
+                <div class="st-meta">С: Николаев К.О. · ВС: Морозов Д.И. · дедлайн 30.06.2026 · ⚠️ 2 замечания</div>
+              </td>
+              <td class="num">40 000</td>
+              <td class="num" style="color:#d97706">15 000</td>
+              <td><span class="status s-review">🔍 Приёмка РП</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="st-name">ПС-03Э-АР-П3</div>
+                <div class="st-meta">С: Николаев К.О. · ВС: Морозов Д.И. · дедлайн 31.07.2026 · ⏳ ожидает доп. инфо</div>
+              </td>
+              <td class="num">30 000</td>
+              <td class="num-small">—</td>
+              <td><span class="status s-work">⛏ Выполнение</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 12px;background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;font-size:11px;color:#666">
+          <span>Итого подзадачи:</span>
+          <span><b>120 000</b> Планер &nbsp;·&nbsp; <b>15 000</b> К Реш.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accreditation -->
+  <div class="card">
+    <div class="card-header">🏅 Аккредитация (завершённые подзадачи: 50 000 ₽)</div>
+    <div class="card-body">
+      <div class="accred-grid">
+        <div class="accred-card">
+          <div class="accred-role">Специалист (С)</div>
+          <div class="accred-name">Николаев К.О.</div>
+          <div class="accred-pct">52.5%</div>
+          <div class="accred-val">26 250 ₽</div>
+          <div class="accred-sub">от 50 000 ₽</div>
+        </div>
+        <div class="accred-card">
+          <div class="accred-role">Ведущий спец. (ВС)</div>
+          <div class="accred-name">Морозов Д.И.</div>
+          <div class="accred-pct">37.5%</div>
+          <div class="accred-val">18 750 ₽</div>
+          <div class="accred-sub">от 50 000 ₽</div>
+        </div>
+        <div class="accred-card">
+          <div class="accred-role">Рук. отдела (РО)</div>
+          <div class="accred-name">Климов Б.Н.</div>
+          <div class="accred-pct">5%</div>
+          <div class="accred-val">2 500 ₽</div>
+          <div class="accred-sub">фиксированно</div>
+        </div>
+        <div class="accred-card">
+          <div class="accred-role">ГС ТХ</div>
+          <div class="accred-name">Лебедева Е.К.</div>
+          <div class="accred-pct">2.5%</div>
+          <div class="accred-val">1 250 ₽</div>
+          <div class="accred-sub">фиксированно</div>
+        </div>
+        <div class="accred-card">
+          <div class="accred-role">ГС Перс</div>
+          <div class="accred-name">Зайцева Ж.Л.</div>
+          <div class="accred-pct">2.5%</div>
+          <div class="accred-val">1 250 ₽</div>
+          <div class="accred-sub">фиксированно</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#666;text-align:right">
+        Ожидается по итогам ПС-03Э-АР-П2 и ПС-03Э-АР-П3 &nbsp;·&nbsp; Итого в работе: <b>85 000 ₽</b>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
